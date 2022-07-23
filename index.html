@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <style>
+        #app {
+            background-color: gainsboro;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <v-app>
+            <v-main>
+                <v-card class="mx-auto mt-5" color="transparent" max-width="1280" elevation="24">
+                    <v-btn class="mx-2" fab dark color="#546e7a" @click="formNuevo()">
+                        <v-icon>mdi-plus</v-icon>
+                    </v-btn>
+                    <v-simple-table class="mt-4">
+                        <template v-slot:default>
+                            <thead>
+                                <tr class="blue-grey darken-1">
+                                    <th class="white--text">id</th>
+                                    <th class="white--text">nombres</th>
+                                    <th class="white--text">telefono</th>
+                                    <th class="white--text">facebook</th>
+                                    <th class="white--text">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="amigo in amigos" :key="amigo.id">
+                                    <td>{{amigo.id}}</td>
+                                    <td>{{amigo.nombre}}</td>
+                                    <td>{{amigo.telefono}}</td>
+                                    <td>{{amigo.facebook}}</td>
+                                    <td>
+                                        <v-btn class="green" dark small fab @click="formEditar(amigo.id,amigo.nombre,amigo.telefono,amigo.facebook)"><v-icon>mdi-pencil</v-icon></v-btn>
+                                        <v-btn class="error" dark small fab @click="borrar(amigo.id)"><v-icon>mdi-delete</v-icon></v-btn>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </template>
+                    </v-simple-table>
+                </v-card>
+                <v-dialog v-model="dialog" max-width="500">
+                    <v-card-title class="blue-grey darken-4 white--text">
+                        Amigo
+                    </v-card-title>
+                    <v-card-text>
+                        <v-form>
+                            <v-container>
+                                <v-row>
+                                    <input :value="amigo.id" name="id" hidden></input>
+                                    <v-col cols="12" md="4">
+                                        <v-text-field v-model="amigo.nombre" label="Nombre" solo required>
+                                            {{amigo.nombre}}
+                                        </v-text-field>
+                                    </v-col>
+                                    <v-col cols="12" md="4">
+                                        <v-text-field v-model="amigo.telefono" label="Telefono" solo required>
+                                            {{amigo.telefono}}
+                                        </v-text-field>
+                                    </v-col>
+                                    <v-col cols="12" md="4">
+                                        <v-text-field v-model="amigo.facebook" label="Facebook" solo required>
+                                            {{amigo.facebook}}
+                                        </v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn color="blue-grey" dark @click="dialog=false">Cancelar</v-btn>
+                        <v-btn color="purple accent-3" dark @click="guardar()" type="submit">Guardar</v-btn>
+                    </v-card-actions>
+                    </v-form>
+                </v-dialog>
+            </v-main>
+        </v-app>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let url = "http://localhost:5000/api/friends/";
+        new Vue({
+            el: "#app",
+            vuetify: new Vuetify(),
+            data() {
+                return {
+                    amigos: [],
+                    dialog: false,
+                    operacion: '',
+                    amigo: {
+                        id: null,
+                        nombre: '',
+                        telefono: '',
+                        facebook: '',
+                    }
+                }
+            },
+            created() {
+                this.mostrar()
+            },
+            methods: {
+                mostrar() {
+                    // router.get("/", amigosController.getFriends);
+                    axios.get(url).then(response => {
+                        this.amigos = response.data;
+                    });
+                },
+                crear() {
+                    let parametros = {
+                            nombre: this.amigo.nombre,
+                            telefono: this.amigo.telefono,
+                            facebook: this.amigo.facebook,
+                        }
+                        // router.-("/", amigosController.addFriend)
+                    axios.post(url, parametros).then(response => {
+                        this.mostrar();
+                    })
+                    this.cleanFriend();
+                },
+                editar() {
+                    let parametros = {
+                            nombre: this.amigo.nombre,
+                            telefono: this.amigo.telefono,
+                            facebook: this.amigo.facebook,
+                        }
+                        //router.put("/:id", amigosController.updateFriend);
+                    axios.put(url + this.amigo.id, parametros).then(response => {
+                        this.mostrar();
+                    })
+                },
+                borrar(id) {
+                    Swal.fire({
+                        title: "Desea eliminar un amigo",
+                        confirmButtonText: 'Confirmar',
+                        showCancelButton: true
+                    }).then((result) => {
+                        console.info(result);
+                        console.info(id);
+                        if (result.isConfirmed) {
+                            //router.delete("/:id", amigosController.deleteFriend)
+                            axios.delete(url + id).then(response => {
+                                this.mostrar();
+                            })
+                            Swal.fire('Eliminado', '', 'success')
+                        } else if (result.idDenied) {
+
+                        }
+                    })
+
+                },
+                cleanFriend() {
+                    this.amigo.nombre = '';
+                    this.amigo.telefono = '';
+                    this.amigo.facebook = '';
+                },
+                guardar() {
+                    if (this.operacion == "crear") {
+                        this.crear()
+                    }
+                    if (this.operacion == "editar") {
+                        this.editar()
+                    }
+                    this.dialog = false;
+                },
+                formNuevo() {
+                    this.dialog = true;
+                    this.operacion = 'crear';
+                    this.cleanFriend();
+                },
+                formEditar(id, nombre, telefono, facebook) {
+                    this.amigo.id = id;
+                    this.amigo.nombre = nombre;
+                    this.amigo.telefono = telefono;
+                    this.amigo.facebook = facebook;
+                    this.dialog = true;
+                    this.operacion = "editar";
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
